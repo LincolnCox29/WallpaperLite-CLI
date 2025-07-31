@@ -9,7 +9,8 @@ typedef void (*libvlc_media_player_play_t)(void*);
 typedef void (*libvlc_media_release_t)(void*);
 typedef void (*libvlc_media_player_release_t)(void*);
 typedef void (*libvlc_release_t)(void*);
-typedef struct libvlc_event_manager_t libvlc_event_manager_t;
+typedef void (*libvlc_media_player_set_media)(void*, void*);
+typedef struct libvlc_event_manager_t libvlc_event_manager_t; 
 typedef struct libvlc_event_t libvlc_event_t;
 typedef enum libvlc_event_e {
     libvlc_MediaPlayerEndReached = 265
@@ -20,6 +21,7 @@ typedef int (*libvlc_event_attach_t)(libvlc_event_manager_t*, libvlc_event_e, li
 
 typedef struct VLC
 {
+    const char videoPath[260];
     void* player;
     void* media;
     void* inst;
@@ -34,18 +36,12 @@ typedef struct VLC
     libvlc_release_t libvlc_release;
     libvlc_media_player_event_manager_t event_manager;
     libvlc_event_attach_t event_attach;
+    libvlc_media_player_set_media player_set_media;
 } VLC;
 
 VLC vlc = { 0 };
 
 HWND hWorkerW;
-
-void VLC_EventHandler(const libvlc_event_t* event, void* userdata)
-{
-    VLC* v = (VLC*)userdata;
-    printf("Looping video...\n");
-    v->player_play(v->player);
-}
 
 inline void cleanup()
 {
@@ -111,6 +107,7 @@ void libvlcLoad()
     vlc.libvlc_release = (libvlc_release_t)GetProcAddress(vlc.libvlc, "libvlc_release");
     vlc.event_manager = (libvlc_media_player_event_manager_t)GetProcAddress(vlc.libvlc, "libvlc_media_player_event_manager");
     vlc.event_attach = (libvlc_event_attach_t)GetProcAddress(vlc.libvlc, "libvlc_event_attach");
+    vlc.player_set_media = (libvlc_media_player_set_media)GetProcAddress(vlc.libvlc, "libvlc_media_player_set_media");
 }
 
 int main()
@@ -123,7 +120,7 @@ int main()
 
     libvlcLoad();
 
-    const char* VLCargs[] = {"--no-audio", "--quiet", "--avcodec-hw=dxva2"};
+    const char* VLCargs[] = {"--no-audio", "--quiet", "--avcodec-hw=dxva2", "--input-repeat=65535" };
     vlc.inst = vlc.libvlc_new(sizeof(VLCargs) / sizeof(VLCargs[0]), VLCargs);
     if (!vlc.inst)
     {
@@ -132,13 +129,12 @@ int main()
         return 1;
     }
 
-    const char videoPath[260];
     printf("%s", "Path to your video: ");
-    scanf_s("%s", videoPath, 260);
-    vlc.media = vlc.libvlc_media_new_path(vlc.inst, videoPath);
+    scanf_s("%s", vlc.videoPath, 260);
+    vlc.media = vlc.libvlc_media_new_path(vlc.inst, vlc.videoPath);
     if (!vlc.media)
     {
-        printf("Failed to load media at %s\n", videoPath);
+        printf("Failed to load media at %s\n", vlc.videoPath);
         cleanup();
         return 1;
     }
@@ -153,9 +149,6 @@ int main()
 
     vlc.set_hwnd(vlc.player, hWorkerW);
     printf("Video attached to window 0x%p\n", hWorkerW);
-
-    libvlc_event_manager_t* em = vlc.event_manager(vlc.player);
-    vlc.event_attach(em, libvlc_MediaPlayerEndReached, VLC_EventHandler, &vlc);
 
     vlc.player_play(vlc.player);
 

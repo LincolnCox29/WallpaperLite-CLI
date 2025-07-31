@@ -1,6 +1,0 @@
-﻿  wallpaperLite.c
-D:\Projects\wallpaperLite\wallpaperLite.c(137,13): warning C4477: "scanf_s": в строке форматирования "%s" требуется аргумент типа "char *", но вариативный аргумент "1" имеет тип "const char *"
-      D:\Projects\wallpaperLite\wallpaperLite.c(137,13):
-      этот аргумент используется описателем преобразования
-  
-  wallpaperLite.vcxproj -> D:\Projects\wallpaperLite\Debug\wallpaperLite.exe
