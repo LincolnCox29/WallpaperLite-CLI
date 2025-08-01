@@ -43,6 +43,36 @@ VLC vlc = { 0 };
 
 HWND hWorkerW;
 
+typedef LONG(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
+
+BOOL isWindows10() {
+    HMODULE hMod = GetModuleHandleW(L"ntdll.dll");
+    if (!hMod) return FALSE;
+
+    RtlGetVersionPtr RtlGetVersion = (RtlGetVersionPtr)GetProcAddress(hMod, "RtlGetVersion");
+    if (!RtlGetVersion) return FALSE;
+
+    RTL_OSVERSIONINFOW os = { 0 };
+    os.dwOSVersionInfoSize = sizeof(os);
+    if (RtlGetVersion(&os) != 0) return FALSE;
+
+    return (os.dwMajorVersion == 10 && os.dwBuildNumber < 22000);
+}
+
+BOOL isWindows11() {
+    HMODULE hMod = GetModuleHandleW(L"ntdll.dll");
+    if (!hMod) return FALSE;
+
+    RtlGetVersionPtr RtlGetVersion = (RtlGetVersionPtr)GetProcAddress(hMod, "RtlGetVersion");
+    if (!RtlGetVersion) return FALSE;
+
+    RTL_OSVERSIONINFOW os = { 0 };
+    os.dwOSVersionInfoSize = sizeof(os);
+    if (RtlGetVersion(&os) != 0) return FALSE;
+
+    return (os.dwMajorVersion == 10 && os.dwBuildNumber >= 22000);
+}
+
 inline void cleanup()
 {
     vlc.player_release(vlc.player);
@@ -68,10 +98,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 BOOL CALLBACK EnumWindowsProc(HWND tophandle, LPARAM lParam) 
 {
-    HWND shellView = FindWindowExA(tophandle, NULL, "SHELLDLL_DefView", NULL);
+    if ( isWindows10( ) )
+    {
+        HWND shellView = FindWindowExA(tophandle, NULL, "SHELLDLL_DefView", NULL);
 
-    if (shellView != NULL)
-        hWorkerW = FindWindowExA(NULL, tophandle, "WorkerW", NULL);
+        if (shellView != NULL)
+            hWorkerW = FindWindowExA(NULL, tophandle, "WorkerW", NULL);
+    }
+    else 
+    {
+        HWND progman = FindWindowA("Progman", NULL);
+        hWorkerW = FindWindowExA(progman, NULL, "WorkerW", NULL);
+    }
+
 
     return TRUE;
 }
