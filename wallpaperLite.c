@@ -80,7 +80,7 @@ HWND GetWorkerW()
 {
     HWND progman = FindWindowA("Progman", NULL);
 
-    SendMessageTimeoutA(progman, 0x052C, 0, 0, SMTO_NORMAL, 1000, NULL);
+    SendMessageTimeoutA(progman, 0x052C, 0xD, 0x1, SMTO_NORMAL, 1000, NULL);
 
     EnumWindows(EnumWindowsProc, 0);
     return hWorkerW;
