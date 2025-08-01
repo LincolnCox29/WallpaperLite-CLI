@@ -6,7 +6,6 @@
 ![GitHub Forks](https://img.shields.io/github/forks/LincolnCox29/WallpaperLite-CLI?style=for-the-badge&logo=github)
 ![GitHub Last Commit](https://img.shields.io/github/last-commit/LincolnCox29/WallpaperLite-CLI?style=for-the-badge&logo=git)
 ![GitHub Releases](https://img.shields.io/github/downloads/LincolnCox29/WallpaperLite-CLI/total?style=for-the-badge&logo=github)
-![Visitor Badge](https://visitor-badge.laobi.icu/badge?page_id=LincolnCox29.WallpaperLite-CLI)
 
 ```ascii
 ██╗    ██╗██████╗ ██╗
