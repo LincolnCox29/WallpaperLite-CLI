@@ -1,6 +1,7 @@
 ﻿#include <stdio.h>
 #include <windows.h>
 
+typedef LONG(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
 typedef void* (*libvlc_new_t)(int, const char**);
 typedef void* (*libvlc_media_new_path_t)(void*, const char*);
 typedef void* (*libvlc_media_player_new_from_media_t)(void*);
@@ -9,15 +10,13 @@ typedef void (*libvlc_media_player_play_t)(void*);
 typedef void (*libvlc_media_release_t)(void*);
 typedef void (*libvlc_media_player_release_t)(void*);
 typedef void (*libvlc_release_t)(void*);
-typedef void (*libvlc_media_player_set_media)(void*, void*);
-typedef struct libvlc_event_manager_t libvlc_event_manager_t; 
-typedef struct libvlc_event_t libvlc_event_t;
-typedef enum libvlc_event_e {
-    libvlc_MediaPlayerEndReached = 265
-} libvlc_event_e;
-typedef void (*libvlc_event_callback_t)(const libvlc_event_t*, void*);
-typedef libvlc_event_manager_t* (*libvlc_media_player_event_manager_t)(void*);
-typedef int (*libvlc_event_attach_t)(libvlc_event_manager_t*, libvlc_event_e, libvlc_event_callback_t, void*);
+
+typedef struct EnumWindowsProcParams
+{
+    int osVersion;
+    HWND progman;
+    HWND hWorkerW;
+} EnumWindowsProcParams;
 
 typedef struct VLC
 {
@@ -34,43 +33,29 @@ typedef struct VLC
     libvlc_media_release_t media_release;
     libvlc_media_player_release_t player_release;
     libvlc_release_t libvlc_release;
-    libvlc_media_player_event_manager_t event_manager;
-    libvlc_event_attach_t event_attach;
-    libvlc_media_player_set_media player_set_media;
 } VLC;
 
 VLC vlc = { 0 };
 
-HWND hWorkerW;
-
-typedef LONG(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
-
-BOOL isWindows10() {
+int getWindowsVersion()
+{
     HMODULE hMod = GetModuleHandleW(L"ntdll.dll");
-    if (!hMod) return FALSE;
+    if (!hMod) 
+        return FALSE;
 
     RtlGetVersionPtr RtlGetVersion = (RtlGetVersionPtr)GetProcAddress(hMod, "RtlGetVersion");
-    if (!RtlGetVersion) return FALSE;
+    if (!RtlGetVersion) 
+        return FALSE;
 
     RTL_OSVERSIONINFOW os = { 0 };
     os.dwOSVersionInfoSize = sizeof(os);
-    if (RtlGetVersion(&os) != 0) return FALSE;
+    if (RtlGetVersion(&os) != 0) 
+        return FALSE;
 
-    return (os.dwMajorVersion == 10 && os.dwBuildNumber < 22000);
-}
+    if (os.dwMajorVersion != 10)
+        return 0;
 
-BOOL isWindows11() {
-    HMODULE hMod = GetModuleHandleW(L"ntdll.dll");
-    if (!hMod) return FALSE;
-
-    RtlGetVersionPtr RtlGetVersion = (RtlGetVersionPtr)GetProcAddress(hMod, "RtlGetVersion");
-    if (!RtlGetVersion) return FALSE;
-
-    RTL_OSVERSIONINFOW os = { 0 };
-    os.dwOSVersionInfoSize = sizeof(os);
-    if (RtlGetVersion(&os) != 0) return FALSE;
-
-    return (os.dwMajorVersion == 10 && os.dwBuildNumber >= 22000);
+    return os.dwBuildNumber < 22000 ? 10 : 11;
 }
 
 inline void cleanup()
@@ -81,7 +66,8 @@ inline void cleanup()
     FreeLibrary(vlc.libvlc);
 }
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) 
+{
     switch (msg) 
     {
         case WM_CLOSE:
@@ -98,31 +84,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 BOOL CALLBACK EnumWindowsProc(HWND tophandle, LPARAM lParam) 
 {
-    if ( isWindows10( ) )
-    {
-        HWND shellView = FindWindowExA(tophandle, NULL, "SHELLDLL_DefView", NULL);
+    EnumWindowsProcParams* params = (EnumWindowsProcParams*)lParam;
 
-        if (shellView != NULL)
-            hWorkerW = FindWindowExA(NULL, tophandle, "WorkerW", NULL);
-    }
-    else 
+    if (params->osVersion == 10)
     {
-        HWND progman = FindWindowA("Progman", NULL);
-        hWorkerW = FindWindowExA(progman, NULL, "WorkerW", NULL);
+        if (FindWindowExA(tophandle, NULL, "SHELLDLL_DefView", NULL) != NULL)
+            params->hWorkerW = FindWindowExA(NULL, tophandle, "WorkerW", NULL);
     }
-
+    else
+    {
+        params->hWorkerW = FindWindowExA(params->progman, NULL, "WorkerW", NULL);
+    }
 
     return TRUE;
 }
 
-HWND GetWorkerW()
+inline void GetWorkerW(EnumWindowsProcParams* params)
 {
-    HWND progman = FindWindowA("Progman", NULL);
+    SendMessageTimeoutA(params->progman, 0x052C, 0xD, 0x1, SMTO_NORMAL, 1000, NULL);
 
-    SendMessageTimeoutA(progman, 0x052C, 0xD, 0x1, SMTO_NORMAL, 1000, NULL);
-
-    EnumWindows(EnumWindowsProc, 0);
-    return hWorkerW;
+    EnumWindows(EnumWindowsProc, (LPARAM)params);
 }
 
 void libvlcLoad()
@@ -144,16 +125,20 @@ void libvlcLoad()
     vlc.media_release = (libvlc_media_release_t)GetProcAddress(vlc.libvlc, "libvlc_media_release");
     vlc.player_release = (libvlc_media_player_release_t)GetProcAddress(vlc.libvlc, "libvlc_media_player_release");
     vlc.libvlc_release = (libvlc_release_t)GetProcAddress(vlc.libvlc, "libvlc_release");
-    vlc.event_manager = (libvlc_media_player_event_manager_t)GetProcAddress(vlc.libvlc, "libvlc_media_player_event_manager");
-    vlc.event_attach = (libvlc_event_attach_t)GetProcAddress(vlc.libvlc, "libvlc_event_attach");
-    vlc.player_set_media = (libvlc_media_player_set_media)GetProcAddress(vlc.libvlc, "libvlc_media_player_set_media");
 }
 
 int main()
 {
-    HWND hWorkerW = GetWorkerW();
-    if (hWorkerW) 
-        printf("WorkerW: 0x%p\n", hWorkerW);
+    EnumWindowsProcParams params =
+    {
+        getWindowsVersion(),
+        FindWindowA("Progman", NULL),
+        NULL
+    };
+
+    GetWorkerW(&params);
+    if (params.hWorkerW) 
+        printf("WorkerW: 0x%p\n", params.hWorkerW);
     else
         printf("WorkerW not found\n");
 
@@ -186,8 +171,8 @@ int main()
         return 1;
     }
 
-    vlc.set_hwnd(vlc.player, hWorkerW);
-    printf("Video attached to window 0x%p\n", hWorkerW);
+    vlc.set_hwnd(vlc.player, params.hWorkerW);
+    printf("Video attached to window 0x%p\n", params.hWorkerW);
 
     vlc.player_play(vlc.player);
 
