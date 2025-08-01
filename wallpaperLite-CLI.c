@@ -1,4 +1,46 @@
-﻿#include <stdio.h>
+﻿/*******************************************************************************
+ *                                                                             *
+ *                      WPL - Video Background Engine                          *
+ *                      =============================                          *
+ *                                                                             *
+ *                        ██╗    ██╗██████╗ ██╗                                *
+ *                        ██║    ██║██╔══██╗██║                                *
+ *                        ██║ █╗ ██║██████╔╝██║                                *
+ *                        ██║███╗██║██╔═══╝ ██║                                *
+ *                        ╚███╔███╔╝██║     ███████╗                           *
+ *                         ╚══╝╚══╝ ╚═╝     ╚══════╝                           *
+ *                                                                             *
+ *  [License Information]                                                      *
+ *  ---------------------                                                      *
+ *  • Uses VLC media player (libvlc.dll) under GNU LGPL v2.1+                  *
+ *  • VLC is a registered trademark of VideoLAN                                *
+ *  • LGPL v2.1+ terms: www.gnu.org/licenses/old-licenses/lgpl-2.1.html        *
+ *  • VLC source code: github.com/videolan/vlc                                 *
+ *                                                                             *
+ *  [Technical Implementation]                                                 *
+ *  --------------------------                                                 *
+ *  • Dynamically loads VLC DLLs via WinAPI (LoadLibrary/GetProcAddress)       *
+ *  • Isolates dependencies in /VLCmin directory                               *
+ *  • Desktop background integration via WorkerW injection                     *
+ *  • Optimized media playback with hardware acceleration                      *
+ *                                                                             *
+ *  [Important Usage Notes]                                                    *
+ *  -----------------------                                                    *
+ *  ! Production requires:                                                     *
+ *      - Full error handling for all DLL functions                            *
+ *      - Buffer overflow protection in user inputs                            *
+ *      - Validation of all function pointers                                  *
+ *                                                                             *
+ *  ! Distribution requires:                                                   *
+ *      - Original VLC licenses in /VLCmin                                     *
+ *      - Unmodified VLC DLL structure                                         *
+ *      - Clear attribution to VideoLAN                                        *
+ *                                                                             *
+ *  © 2025 LincolnCox29, MHSPlay | github.com/LincolnCox29/WallpaperLite-CLI   *
+ *                                                                             *
+ *******************************************************************************/
+
+#include <stdio.h>
 #include <windows.h>
 
 typedef LONG(WINAPI* RtlGetVersionPtr)(PRTL_OSVERSIONINFOW);
@@ -144,8 +186,18 @@ void libvlcLoad()
     #undef GET_FUNC
 }
 
-int main()
+int main(int argc, char* argv[])
 {
+    if (!argv[1])
+    {
+        printf(
+            "Error: arg \"videoPath\" not found\n"
+            "wallpaperLite-CLI <path-to-video>\n"
+        );
+        exit(1);
+    }
+    sscanf_s(vlc.videoPath, "%s", argv[1], 260);
+
     EnumWindowsProcParams params =
     {
         getWindowsVersion(),
@@ -170,8 +222,6 @@ int main()
         return 1;
     }
 
-    printf("%s", "Path to your video: ");
-    scanf_s("%s", vlc.videoPath, 260);
     vlc.media = vlc.libvlc_media_new_path(vlc.inst, vlc.videoPath);
     if (!vlc.media)
     {

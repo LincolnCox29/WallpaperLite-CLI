@@ -133,7 +133,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="wallpaperLite.c" />
+    <ClCompile Include="wallpaperLite-CLI.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="VLCmin\includs\libvlc.h" />

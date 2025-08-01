@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="wallpaperLite.c">
+    <ClCompile Include="wallpaperLite-CLI.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
