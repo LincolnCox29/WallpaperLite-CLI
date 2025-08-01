@@ -196,7 +196,7 @@ int main(int argc, char* argv[])
         );
         exit(1);
     }
-    sscanf_s(vlc.videoPath, "%s", argv[1], 260);
+    sscanf_s(argv[1], "%s", vlc.videoPath, 260);
 
     EnumWindowsProcParams params =
     {
