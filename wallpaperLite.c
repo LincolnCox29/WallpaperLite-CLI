@@ -27,11 +27,11 @@ typedef struct VLC
     HMODULE libvlc;
     libvlc_new_t libvlc_new;
     libvlc_media_new_path_t libvlc_media_new_path;
-    libvlc_media_player_new_from_media_t player_new;
-    libvlc_media_player_set_hwnd_t set_hwnd;
-    libvlc_media_player_play_t player_play;
-    libvlc_media_release_t media_release;
-    libvlc_media_player_release_t player_release;
+    libvlc_media_player_new_from_media_t libvlc_media_player_new_from_media;
+    libvlc_media_player_set_hwnd_t libvlc_media_player_set_hwnd;
+    libvlc_media_player_play_t libvlc_media_player_play;
+    libvlc_media_release_t libvlc_media_release;
+    libvlc_media_player_release_t libvlc_media_player_release;
     libvlc_release_t libvlc_release;
 } VLC;
 
@@ -44,6 +44,7 @@ int getWindowsVersion()
         return FALSE;
 
     RtlGetVersionPtr RtlGetVersion = (RtlGetVersionPtr)GetProcAddress(hMod, "RtlGetVersion");
+    FreeLibrary(hMod);
     if (!RtlGetVersion) 
         return FALSE;
 
@@ -60,10 +61,14 @@ int getWindowsVersion()
 
 inline void cleanup()
 {
-    vlc.player_release(vlc.player);
-    vlc.media_release(vlc.media);
-    vlc.libvlc_release(vlc.inst);
-    FreeLibrary(vlc.libvlc);
+    if (vlc.player)
+        vlc.libvlc_media_player_release(vlc.player);
+    if (vlc.media)
+        vlc.libvlc_media_release(vlc.media);
+    if (vlc.inst)
+        vlc.libvlc_release(vlc.inst);
+    if (vlc.libvlc)
+        FreeLibrary(vlc.libvlc);
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) 
@@ -75,6 +80,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             DestroyWindow(hWnd);
             return 0;
         case WM_DESTROY:
+            cleanup();
             PostQuitMessage(0);
             return 0;
         default:
@@ -114,17 +120,28 @@ void libvlcLoad()
     if (!vlc.libvlc)
     {
         DWORD error = GetLastError();
-        printf("Error: %d\n", error);
+        printf("Error: %d\n", GetLastError());
         exit(error);
     }
-    vlc.libvlc_new = (libvlc_new_t)GetProcAddress(vlc.libvlc, "libvlc_new");
-    vlc.libvlc_media_new_path = (libvlc_media_new_path_t)GetProcAddress(vlc.libvlc, "libvlc_media_new_path");
-    vlc.player_new = (libvlc_media_player_new_from_media_t)GetProcAddress(vlc.libvlc, "libvlc_media_player_new_from_media");
-    vlc.set_hwnd = (libvlc_media_player_set_hwnd_t)GetProcAddress(vlc.libvlc, "libvlc_media_player_set_hwnd");
-    vlc.player_play = (libvlc_media_player_play_t)GetProcAddress(vlc.libvlc, "libvlc_media_player_play");
-    vlc.media_release = (libvlc_media_release_t)GetProcAddress(vlc.libvlc, "libvlc_media_release");
-    vlc.player_release = (libvlc_media_player_release_t)GetProcAddress(vlc.libvlc, "libvlc_media_player_release");
-    vlc.libvlc_release = (libvlc_release_t)GetProcAddress(vlc.libvlc, "libvlc_release");
+
+    #define GET_FUNC(name) \
+        vlc.name = (name##_t)GetProcAddress(vlc.libvlc, #name); \
+        if (!vlc.name) { \
+            printf("Failed to get " #name "\n"); \
+            cleanup(); \
+            exit(1); \
+        }
+
+    GET_FUNC(libvlc_new);
+    GET_FUNC(libvlc_media_new_path);
+    GET_FUNC(libvlc_media_player_new_from_media);
+    GET_FUNC(libvlc_media_player_set_hwnd);
+    GET_FUNC(libvlc_media_player_play);
+    GET_FUNC(libvlc_media_release);
+    GET_FUNC(libvlc_media_player_release);
+    GET_FUNC(libvlc_release);
+
+    #undef GET_FUNC
 }
 
 int main()
@@ -163,7 +180,7 @@ int main()
         return 1;
     }
 
-    vlc.player = vlc.player_new(vlc.media);
+    vlc.player = vlc.libvlc_media_player_new_from_media(vlc.media);
     if (!vlc.player)
     {
         printf("Failed to create player\n");
@@ -171,10 +188,10 @@ int main()
         return 1;
     }
 
-    vlc.set_hwnd(vlc.player, params.hWorkerW);
+    vlc.libvlc_media_player_set_hwnd(vlc.player, params.hWorkerW);
     printf("Video attached to window 0x%p\n", params.hWorkerW);
 
-    vlc.player_play(vlc.player);
+    vlc.libvlc_media_player_play(vlc.player);
 
     MSG msg;
     while (GetMessage(&msg, NULL, 0, 0)) 
