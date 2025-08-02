@@ -85,14 +85,16 @@ int getWindowsVersion()
     if (!hMod) 
         return FALSE;
 
+    // Hooking RtlGetVersion() from ntdll.dll
     RtlGetVersionPtr RtlGetVersion = (RtlGetVersionPtr)GetProcAddress(hMod, "RtlGetVersion");
     FreeLibrary(hMod);
     if (!RtlGetVersion) 
         return FALSE;
-
+    
+    // Init os struct
     RTL_OSVERSIONINFOW os = { 0 };
     os.dwOSVersionInfoSize = sizeof(os);
-    if (RtlGetVersion(&os) != 0) 
+    if (RtlGetVersion(&os) != 0)
         return FALSE;
 
     if (os.dwMajorVersion != 10)
@@ -136,6 +138,8 @@ BOOL CALLBACK EnumWindowsProc(HWND tophandle, LPARAM lParam)
 
     if (params->osVersion == 10)
     {
+        // Look for the SHELLDLL_DefView HWND as a child of the current top handle
+        // If found, get the WorkerW HWND
         if (FindWindowExA(tophandle, NULL, "SHELLDLL_DefView", NULL) != NULL)
             params->hWorkerW = FindWindowExA(NULL, tophandle, "WorkerW", NULL);
     }
@@ -144,18 +148,21 @@ BOOL CALLBACK EnumWindowsProc(HWND tophandle, LPARAM lParam)
         params->hWorkerW = FindWindowExA(params->progman, NULL, "WorkerW", NULL);
     }
 
+    // Continue enumeration
     return TRUE;
 }
 
 inline void GetWorkerW(EnumWindowsProcParams* params)
 {
+    // Create WorkerW via message 
     SendMessageTimeoutA(params->progman, 0x052C, 0xD, 0x1, SMTO_NORMAL, 1000, NULL);
-
+    // Find WorkerW
     EnumWindows(EnumWindowsProc, (LPARAM)params);
 }
 
 void libvlcLoad()
 {
+    // Init VLC lib
     SetDllDirectoryA("VLCmin");
     SetEnvironmentVariableA("VLC_PLUGIN_PATH", "VLCmin/plugins");
     vlc.libvlc = LoadLibraryA("VLCmin\\libvlc.dll");
@@ -166,6 +173,7 @@ void libvlcLoad()
         exit(error);
     }
 
+    // Macro for hooking funcs from libvlc.dll
     #define GET_FUNC(name) \
         vlc.name = (name##_t)GetProcAddress(vlc.libvlc, #name); \
         if (!vlc.name) { \
@@ -174,6 +182,7 @@ void libvlcLoad()
             exit(1); \
         }
 
+    // Hooking necessary funcs
     GET_FUNC(libvlc_new);
     GET_FUNC(libvlc_media_new_path);
     GET_FUNC(libvlc_media_player_new_from_media);
@@ -188,6 +197,7 @@ void libvlcLoad()
 
 int main(int argc, char* argv[])
 {
+    // Parse command line arguments 
     if (!argv[1] || argc < 1)
     {
         printf(
@@ -205,6 +215,7 @@ int main(int argc, char* argv[])
         NULL
     };
 
+    // Get WorkerW HWND
     GetWorkerW(&params);
     if (params.hWorkerW) 
         printf("WorkerW: 0x%p\n", params.hWorkerW);
@@ -213,6 +224,7 @@ int main(int argc, char* argv[])
 
     libvlcLoad();
 
+    //Init VLC with: Disables audio, Suppressing non-error messages, hw-accelerated, looping
     const char* VLCargs[] = {"--no-audio", "--quiet", "--avcodec-hw=dxva2", "--input-repeat=65535" };
     vlc.inst = vlc.libvlc_new(sizeof(VLCargs) / sizeof(VLCargs[0]), VLCargs);
     if (!vlc.inst)
@@ -238,11 +250,13 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    // VLC hooking WorkerW
     vlc.libvlc_media_player_set_hwnd(vlc.player, params.hWorkerW);
     printf("Video attached to window 0x%p\n", params.hWorkerW);
 
     vlc.libvlc_media_player_play(vlc.player);
 
+    // Main loop
     MSG msg;
     while (GetMessage(&msg, NULL, 0, 0)) 
     {
