@@ -1,3 +1,0 @@
-D:/Projects/wallpaperLite-CLI/build/CMakeFiles/wallpaperLite-CLI.dir
-D:/Projects/wallpaperLite-CLI/build/CMakeFiles/ALL_BUILD.dir
-D:/Projects/wallpaperLite-CLI/build/CMakeFiles/ZERO_CHECK.dir
