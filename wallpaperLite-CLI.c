@@ -62,7 +62,7 @@ typedef struct EnumWindowsProcParams
 
 typedef struct VLC
 {
-    const char videoPath[260];
+    char videoPath[260];
     void* player;
     void* media;
     void* inst;
@@ -188,7 +188,7 @@ void libvlcLoad()
 
 int main(int argc, char* argv[])
 {
-    if (!argv[1])
+    if (!argv[1] || argc < 1)
     {
         printf(
             "Error: arg \"videoPath\" not found\n"

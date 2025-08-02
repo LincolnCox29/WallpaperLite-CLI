@@ -30,6 +30,25 @@
 wallpaperLite-CLI.exe C:\path\to\your\video.mp4
 ```
 
+## 🔧 Building
+### Method 1 (recommended)
+1. Run auto_builder.bat
+### Method 2 (with CMake)
+1. Clone this repo
+```bash
+git clone https://github.com/LincolnCox29/WallpaperLite-CLI
+```
+2. Create build folder in repo dir
+```bash
+mkdir build
+cd build
+```
+3. Build with CMake
+```
+cmake -A Win32 ..
+cmake --build . --config Release
+```
+
 ## 🛠 Technical Implementation
 ```mermaid
 graph LR
