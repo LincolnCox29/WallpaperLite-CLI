@@ -16,6 +16,10 @@
  ╚══╝╚══╝ ╚═╝     ╚══════╝
 ```
 
+## 🎦 UI Version
+- https://github.com/MHSPlay/Wallpaper-Lite
+- By [LincolCox29](https://github.com/LincolnCox29) and [MHSPlay](https://github.com/MHSPlay)
+
 ## 📌 Features
 - Hardware-accelerated video playback (DXVA2)
 - Seamless desktop integration via `WorkerW` injection
