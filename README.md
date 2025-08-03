@@ -37,7 +37,11 @@ wallpaperLite-CLI.exe C:\path\to\your\video.mp4
 
 ## 🔧 Building
 ### Method 1 (recommended)
-1. Run auto_builder.bat
+1. Clone this repo
+```bash
+git clone https://github.com/LincolnCox29/WallpaperLite-CLI
+```
+2. Run auto_builder.bat
 ### Method 2 (with CMake)
 1. Clone this repo
 ```bash
