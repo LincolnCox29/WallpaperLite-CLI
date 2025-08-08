@@ -12,11 +12,11 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments>"C:\Users\Justk\OneDrive\Desktop\qwe3.webm"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"C:\Users\Justk\OneDrive\Desktop\WomanWithMagicalEyesWP1.mp4"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LocalDebuggerCommandArguments>"C:\Users\Justk\OneDrive\Desktop\qwe3.webm"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"C:\Users\Justk\OneDrive\Desktop\WomanWithMagicalEyesWP1.mp4"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>
