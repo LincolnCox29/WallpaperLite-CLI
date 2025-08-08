@@ -16,6 +16,10 @@
  ╚══╝╚══╝ ╚═╝     ╚══════╝
 ```
 
+## 🎦 UI Version
+- https://github.com/MHSPlay/Wallpaper-Lite
+- By [LincolCox29](https://github.com/LincolnCox29) and [MHSPlay](https://github.com/MHSPlay)
+
 ## 📌 Features
 - Hardware-accelerated video playback (DXVA2)
 - Seamless desktop integration via `WorkerW` injection
@@ -37,7 +41,11 @@ wallpaperLite-CLI.exe C:\path\to\your\video.mp4
 
 ## 🔧 Building
 ### Method 1 (recommended)
-1. Run auto_builder.bat
+1. Clone this repo
+```bash
+git clone https://github.com/LincolnCox29/WallpaperLite-CLI
+```
+2. Run auto_builder.bat
 ### Method 2 (with CMake)
 1. Clone this repo
 ```bash
