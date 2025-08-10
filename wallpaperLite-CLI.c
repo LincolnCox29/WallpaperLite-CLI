@@ -247,10 +247,10 @@ BOOL isActiveWindowFullScreen()
         return FALSE;
 
     // CMP size
-    return (windowRect.left == monitorInfo.rcMonitor.left &&
-        windowRect.top == monitorInfo.rcMonitor.top &&
-        windowRect.right == monitorInfo.rcMonitor.right &&
-        windowRect.bottom == monitorInfo.rcMonitor.bottom);
+    return (windowRect.left   <= monitorInfo.rcMonitor.left   + 1 &&
+            windowRect.top    <= monitorInfo.rcMonitor.top    + 1 &&
+            windowRect.right  >= monitorInfo.rcMonitor.right  - 1 &&
+            windowRect.bottom >= monitorInfo.rcMonitor.bottom - 1);
 }
 
 void setPlayerState(BOOL* wasFullscreen)
