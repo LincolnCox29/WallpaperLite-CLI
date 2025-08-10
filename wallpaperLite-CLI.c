@@ -357,7 +357,7 @@ int main(int argc, char* argv[])
 
         setPlayerState(&wasFullscreen);
 
-        Sleep(100);
+        MsgWaitForMultipleObjects(0, NULL, FALSE, 500, QS_ALLINPUT);
     }
 
 	return 0;
