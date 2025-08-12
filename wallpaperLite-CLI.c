@@ -180,6 +180,7 @@ HWND GetWorkerW()
     {
         printf("WorkerW not found\n");
     }
+    return NULL;
 }
 
 void libvlcLoad()
