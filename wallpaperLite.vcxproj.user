@@ -14,9 +14,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LocalDebuggerCommandArguments>"C:\Users\Justk\OneDrive\Desktop\WomanWithMagicalEyesWP1.mp4"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArgumentsHistory>"C:\Users\Justk\OneDrive\Desktop\WomanWithMagicalEyesWP1.mp4"|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerCommandArguments>"C:\Users\Justk\OneDrive\Desktop\WomanWithMagicalEyesWP1.mp4"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArgumentsHistory>"C:\Users\Justk\OneDrive\Desktop\WomanWithMagicalEyesWP1.mp4"|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
 </Project>
