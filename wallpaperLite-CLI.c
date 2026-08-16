@@ -187,20 +187,13 @@ static BOOL CALLBACK EnumWindowsProc(HWND tophandle, LPARAM lParam)
 {
     EnumWindowsProcParams* params = (EnumWindowsProcParams*)lParam;
 
-    if (params->osVersion == 10)
+    if (FindWindowExA(tophandle, NULL, "SHELLDLL_DefView", NULL) != NULL)
     {
-        /* Windows 10: WorkerW is a sibling of the top-level window that
-         * owns the SHELLDLL_DefView child. */
-        if (FindWindowExA(tophandle, NULL, "SHELLDLL_DefView", NULL) != NULL)
-            params->hWorkerW = FindWindowExA(NULL, tophandle, "WorkerW", NULL);
+        /* tophandle is the WorkerW (or Progman, on older builds) hosting
+         * desktop icons. The WorkerW we actually want is its next
+         * sibling in z-order. */
+        params->hWorkerW = FindWindowExA(NULL, tophandle, "WorkerW", NULL);
     }
-    else
-    {
-        /* Windows 11+ (or unknown/undetected version, as a best-effort
-         * fallback): WorkerW is a direct child of Progman. */
-        params->hWorkerW = FindWindowExA(params->progman, NULL, "WorkerW", NULL);
-    }
-
     return TRUE; /* keep enumerating */
 }
 
@@ -213,13 +206,18 @@ static HWND GetWorkerW(void)
         return NULL;
     }
 
-    EnumWindowsProcParams params = { getWindowsVersion(), progman, NULL };
-    if (params.osVersion == 0)
-        printf("Warning: could not determine Windows version, using Windows 11-style WorkerW lookup\n");
-
-    SendMessageTimeoutA(progman, MSG_SPAWN_WORKERW, 0xD, 0x1, SMTO_NORMAL, 1000, NULL);
-
+    EnumWindowsProcParams params = { progman, NULL };
+    SendMessageTimeoutA(progman, 0x052C, 0xD, 0x1, SMTO_NORMAL, 1000, NULL);
     EnumWindows(EnumWindowsProc, (LPARAM)&params);
+
+    if (!params.hWorkerW)
+    {
+        /* Fallback: some builds never spawn a second WorkerW and just
+         * keep SHELLDLL_DefView directly under Progman. In that case
+         * Progman itself is the correct target to parent into. */
+        if (FindWindowExA(progman, NULL, "SHELLDLL_DefView", NULL) != NULL)
+            params.hWorkerW = progman;
+    }
 
     if (params.hWorkerW)
         printf("WorkerW: 0x%p\n", (void*)params.hWorkerW);
@@ -399,8 +397,8 @@ int main(int argc, char* argv[])
 
     const char* VLCargs[] =
     {
-        //"-vv",
-         "--quiet",                  /* suppress non-error messages */
+        "-vv",
+        //"--quiet",                  /* suppress non-error messages */
         "--avcodec-hw=dxva2",        /* hardware-accelerated decoding */
         "--input-repeat=65535",      /* effectively loop forever */
         "--drop-late-frames",        /* drop frames we can't keep up with */
@@ -415,7 +413,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    //vlc.libvlc_log_set(vlc.inst, vlcLogCallback, NULL);
+    vlc.libvlc_log_set(vlc.inst, vlcLogCallback, NULL);
 
     vlc.media = vlc.libvlc_media_new_path(vlc.inst, vlc.videoPath);
     if (!vlc.media)
